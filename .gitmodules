@@ -1,0 +1,3 @@
+[submodule "magi_functional"]
+	path = magi_functional
+	url = https://github.com/BinhPQ2/magi_functional.git
