@@ -1,0 +1,13 @@
+services:
+  nlpa-project:
+    container_name: multimedia-manga-read-along
+    stop_grace_period: 1s
+    build:
+      context: ./
+      dockerfile: Dockerfile
+    ports:
+      - "8000:8000"
+      - "8501:8501"
+    environment:
+      - API_URL=http://0.0.0.0 
+      - API_PORT=8000
