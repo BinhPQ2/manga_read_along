@@ -1,0 +1,19 @@
+<page>00<endpage>
+<page>01<endpage>
+<name>Other<endname>: Eh...?
+<name>Other<endname>: All of a sudden
+<name>ruri<endname>: I grew horns
+<name>ruri<endname>: Am I really human?
+<name>ruri<endname>: Mom, about this...
+<name>ruri<endname>: Oh, Mor- Ning Honey.
+<name>ruri<endname>: This thing on my head ...
+<name>ruri<endname>: It's horns.
+<name>ruri<endname>: You know this?
+<page>02<endpage>
+<name>mom<endname>: But why did they...
+<name>mom<endname>: Ah, that's because you're not a human.
+<name>mom<endname>: Since your Dad
+<name>mom<endname>: Is a Dragon
+<name>mom<endname>: According to your Dad, your body will start to change when you're 15.
+<name>mom<endname>: I didn't expect the horns to grow overnight though.
+<name>mom<endname>: Anyways, eat your breakfast.
