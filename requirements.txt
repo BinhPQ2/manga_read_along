@@ -1,1 +1,6 @@
 streamlit_lottie
+TTS
+einops 
+pulp
+Pillow==9.5.0
+gdown
