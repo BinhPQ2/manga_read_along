@@ -72,6 +72,16 @@ if "progress_complete" not in st.session_state:
 
 left, right = st.columns(2)
 
+def wait_for_video(file_path, timeout=300):
+    """Wait until the video file is generated or timeout (in seconds) is reached."""
+    start_time = time.time()
+    while not os.path.exists(file_path):
+        elapsed_time = time.time() - start_time
+        if elapsed_time > timeout:
+            return False
+        time.sleep(5)  # Check every 5 seconds
+    return True
+
 if left.button("Generate Video", icon="🔥", use_container_width=True):
     if chapter_files and character_files:
         st.session_state.video_url = ""
@@ -97,15 +107,19 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
             )
 
             response.raise_for_status()
-            print("RESPONSE", response.json())
             data = response.json()
 
-            # Determine video URL based on API response
+            # Determine video URL based on API response and wait for file
             generated_video_path = "output/output_final/video_Padding_True.mp4"
-            if data.get("is_success") and os.path.exists(generated_video_path):
-                st.session_state.video_url = generated_video_path
-                st.session_state.progress_complete = True
-                st.success("Video generated successfully!")
+            if data.get("is_success"):
+                # Wait for the video file to appear
+                if wait_for_video(generated_video_path):
+                    st.session_state.video_url = generated_video_path
+                    st.session_state.progress_complete = True
+                    st.success("Video generated successfully!")
+                else:
+                    st.session_state.video_url = "https://files.vuxlinh.com/demo.mp4"
+                    st.warning("Video generation timed out. Displaying the default video.")
             else:
                 st.session_state.video_url = "https://files.vuxlinh.com/demo.mp4"
                 st.warning("An error occurred during video generation. Displaying the default video.")
