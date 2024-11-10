@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from src.backend.pipeline import pipeline  # Ensure pipeline is correctly imported
+from src.backend.pipeline import pipeline
 
 app = FastAPI()
 
@@ -12,7 +12,7 @@ class GenerateResponse(BaseModel):
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"message": "Hello World!"}
 
 @app.post("/generate-manga", response_model=GenerateResponse)
 def get_response(data: GenerateMangaRequest):
@@ -20,7 +20,7 @@ def get_response(data: GenerateMangaRequest):
         is_colorization = data.is_colorization
         print(f"Received isColorization: {is_colorization}", flush=True)
         is_success = pipeline(is_colorization)
-        print(f"Response answer: {is_success}", flush=True)
+        print(f"Response is_success: {is_success}", flush=True)
         if is_success:
             return GenerateResponse(is_success=True)
         else:

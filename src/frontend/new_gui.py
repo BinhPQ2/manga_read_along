@@ -26,23 +26,39 @@ def clear_folders():
     transcript_path = os.path.join(root_path, "output/transcript")
     audio_path = os.path.join(root_path, "output/audio")
     final_output_path = os.path.join(root_path, "output/output_final")
-    folders_to_delete = [raw_image_path, character_path, raw_image_rename_path, colorized_path, json_path]
+    folders_to_delete = [raw_image_path, character_path, raw_image_rename_path, colorized_path, json_path, transcript_path, audio_path, final_output_path]
 
     for folder in folders_to_delete:
         if os.path.exists(folder):
             shutil.rmtree(folder)
-            os.makedirs(folder)  # Re-create the empty folder
+            os.makedirs(folder)
 
-    # Reset session state for video URL and progress
     st.session_state.video_url = ""
     st.session_state.progress_complete = False
     st.success("Cleared all data and reset folders successfully.")
 
-# Set up Streamlit UI
+def save_uploaded_files(files, directory):
+    for file in files:
+        with open(os.path.join(directory, file.name), "wb") as f:
+            f.write(file.getbuffer())
+
+def call_api(url, colorize, timeout, queue):
+    """Call the API and put the response in a queue."""
+    try:
+        response = requests.post(
+            url,
+            json={"is_colorization": colorize},
+            timeout=timeout
+        )
+        response.raise_for_status()
+        queue.put(response.json())
+    except requests.exceptions.RequestException as e:
+        print(f"API request failed: {e}")
+        queue.put({"is_success": False})
+
 st.set_page_config(page_title="Manga Video Generator Interface", page_icon=":movie_camera:", layout="wide")
 st.title(":movie_camera: Manga Video Generator Interface")
 
-# Sidebar setup
 with st.sidebar:
     lottie = load_lottieurl("https://assets6.lottiefiles.com/packages/lf20_cjnxwrkt.json")
     st_lottie(lottie)
@@ -60,19 +76,16 @@ with st.sidebar:
     st.write("**Step 4**: Click 'Generate Video' to generate the video.")
     st.write("**Step 5**: Click 'Clear' to clear all input fields.")
 
-# Ensure directories exist
 raw_image_path = "input/raw"
 character_path = "input/character"
 os.makedirs(raw_image_path, exist_ok=True)
 os.makedirs(character_path, exist_ok=True)
 
-# File upload for Chapter Pages
 st.header("Upload Chapter Pages")
 chapter_files = st.file_uploader("Upload images for Chapter Pages", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 if not chapter_files:
     st.warning("⚠️ Please upload images for Chapter Pages.")
 
-# File upload for Character Reference Images
 st.header("Upload Character Reference Images")
 character_files = st.file_uploader("Upload images for Character Reference", type=["png", "jpg", "jpeg"], accept_multiple_files=True)
 if not character_files:
@@ -82,16 +95,8 @@ if not character_files:
 # st.header("Character Names")
 #character_names = st.text_input("Enter Character Names (comma separated)", placeholder="Luffy,Hank,Nami")
 
-# Colorization option
 colorize = st.checkbox("Colorization")
 
-# Function to save uploaded files
-def save_uploaded_files(files, directory):
-    for file in files:
-        with open(os.path.join(directory, file.name), "wb") as f:
-            f.write(file.getbuffer())
-
-# Initialize session state
 if "video_url" not in st.session_state:
     st.session_state.video_url = ""
 if "progress_complete" not in st.session_state:
@@ -99,28 +104,12 @@ if "progress_complete" not in st.session_state:
 
 left, right = st.columns(2)
 
-def call_api(url, colorize, timeout, queue):
-    """Call the API and put the response in a queue."""
-    try:
-        response = requests.post(
-            url,
-            json={"is_colorization": colorize},
-            timeout=timeout
-        )
-        response.raise_for_status()
-        queue.put(response.json())  # Put the response in the queue
-    except requests.exceptions.RequestException as e:
-        print(f"API request failed: {e}")
-        queue.put({"is_success": False})  # Put a failure response in the queue if there's an error
-
-# Assume necessary imports, paths, and setup code are here
 generated_video_path = "/kaggle/working/output/output_final/video_Padding_True.mp4"
 if left.button("Generate Video", icon="🔥", use_container_width=True):
     if chapter_files and character_files:
         st.session_state.video_url = ""
         st.session_state.progress_complete = False
 
-        # Save the uploaded files to respective directories
         save_uploaded_files(chapter_files, raw_image_path)
         save_uploaded_files(character_files, character_path)
 
@@ -128,47 +117,36 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
         #with open(os.path.join(character_path, "character_names.txt"), "w") as f:
         #    f.write(character_names)
 
-        # Initialize progress bar and progress text
         progress_text = "Generating video in progress. Please wait."
         my_bar = st.progress(0)
-        progress = 0  # Start progress
+        progress = 0
 
-        # Start time tracking for timeout
         start_time = time.time()
-        timeout_seconds = 600  # 10 minutes
+        timeout_seconds = 600
 
-        # Queue to retrieve the response from the thread
         response_queue = Queue()
 
-        # Start API call in a separate thread
         api_thread = threading.Thread(target=call_api, args=("http://localhost:8000/generate-manga", colorize, timeout_seconds, response_queue))
         api_thread.start()
 
-        # Run progress bar in increments while waiting for the API response
         while (time.time() - start_time < timeout_seconds) and response_queue.empty():
-            # Update the progress bar in a loop
             progress = (progress + 5) % 100
             my_bar.progress(progress, text=progress_text)
-            time.sleep(1)  # Adjust speed for smooth progress bar animation
+            time.sleep(1)
 
-        # Get the response from the queue if available
         if not response_queue.empty():
             data = response_queue.get()
         else:
-            data = {"is_success": False}  # Timeout, set failure response
+            data = {"is_success": False}
 
-        # Clear the progress bar
         my_bar.empty()
 
-        # Check if the video was generated successfully
         if data.get("is_success"):
-            #generated_video_path = "/kaggle/working/output/output_final/video_Padding_True.mp4"
             st.session_state.video_url = generated_video_path
             st.session_state.progress_complete = True
             st.success("Video generated successfully!")
         else:
-            # If generation fails or the file doesn't exist, set the default video URL
-            st.session_state.video_url = "https://files.vuxlinh.com/demo.mp4"
+            st.session_state.video_url = ""
             st.warning("An error occurred or the video file was not found. Displaying the default video.")
 
     else:
@@ -179,9 +157,7 @@ if right.button("Clear", icon="💣", use_container_width=True):
     st.session_state.video_url = ""
     st.session_state.progress_complete = False
 
-
 reencoded_video_path = "/kaggle/working/output/output_final/video_Padding_True_audio_reencoded.mp4"
-st.write(f"File {reencoded_video_path} - exists: {os.path.exists(reencoded_video_path)}")
 st.header("Play Output Video")
 if os.path.exists(reencoded_video_path):
     st.session_state.video_url = reencoded_video_path
@@ -193,33 +169,3 @@ if os.path.exists(reencoded_video_path):
         st.write("Video file found but could not be read. Please check the file permissions or try regenerating.")
 else:
     st.write("No video to display. Click 'Generate Video' to load the video.")
-
-# Define paths
-
-# # Re-encode the video to ensure compatibility
-# def reencode_video(input_path, output_path):
-#     if not os.path.exists(output_path):
-#         try:
-#             result = subprocess.run([
-#                 "ffmpeg", "-i", input_path, "-c:v", "libx264", "-c:a", "aac", "-strict", "experimental", output_path
-#             ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-#             st.write("Re-encoding completed successfully.")
-#             st.write(result.stdout.decode())
-#         except subprocess.CalledProcessError as e:
-#             st.error(f"Error during video re-encoding: {e}")
-#             st.write(e.stderr.decode())
-
-# Load and display video in Streamlit
-# def display_video(video_path):
-#     if os.path.exists(video_path):
-#         with open(video_path, "rb") as video_file:
-#             video_bytes = video_file.read()
-#         st.video(video_bytes)
-#     else:
-#         st.write("Video file not found. Click 'Generate Video' to try again.")
-
-# st.write(f"File {reencoded_video_path} - exists: {os.path.exists(reencoded_video_path)}")
-# if os.path.exists(reencoded_video_path):
-#     st.header("Play Output Video")
-#     st.write(f"Generated video found at: {reencoded_video_path}")
-#     display_video(reencoded_video_path)
