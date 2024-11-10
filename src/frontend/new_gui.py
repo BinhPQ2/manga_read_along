@@ -196,21 +196,20 @@ if right.button("Clear", icon="💣", use_container_width=True):
 os.chdir("/kaggle/working")
 
 # Define paths
-generated_video_path = "output/output_final/video_Padding_True.mp4"
-reencoded_video_path = os.path.splitext(generated_video_path)[0] + "_reencoded.mp4"
+reencoded_video_path = "/kaggle/working/output/output_final/video_Padding_True_reencoded.mp4"
 
-# Re-encode the video to ensure compatibility
-def reencode_video(input_path, output_path):
-    if not os.path.exists(output_path):
-        try:
-            result = subprocess.run([
-                "ffmpeg", "-i", input_path, "-c:v", "libx264", "-c:a", "aac", "-strict", "experimental", output_path
-            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            st.write("Re-encoding completed successfully.")
-            st.write(result.stdout.decode())
-        except subprocess.CalledProcessError as e:
-            st.error(f"Error during video re-encoding: {e}")
-            st.write(e.stderr.decode())
+# # Re-encode the video to ensure compatibility
+# def reencode_video(input_path, output_path):
+#     if not os.path.exists(output_path):
+#         try:
+#             result = subprocess.run([
+#                 "ffmpeg", "-i", input_path, "-c:v", "libx264", "-c:a", "aac", "-strict", "experimental", output_path
+#             ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+#             st.write("Re-encoding completed successfully.")
+#             st.write(result.stdout.decode())
+#         except subprocess.CalledProcessError as e:
+#             st.error(f"Error during video re-encoding: {e}")
+#             st.write(e.stderr.decode())
 
 # Load and display video in Streamlit
 def display_video(video_path):
@@ -222,11 +221,10 @@ def display_video(video_path):
         st.write("Video file not found. Click 'Generate Video' to try again.")
 
 # Check if generated video exists, re-encode, and display
-if os.path.exists(generated_video_path):
-    time.sleep(5)
+st.write(f"123_Generated video found at: {reencoded_video_path}")
+if os.path.exists(reencoded_video_path):
     st.header("Play Output Video")
-    st.write(f"Generated video found at: {generated_video_path}")
-    reencode_video(generated_video_path, reencoded_video_path)
+    st.write(f"Generated video found at: {reencoded_video_path}")
     display_video(reencoded_video_path)
 else:
     st.error("Generated video not found. Please generate it first.")

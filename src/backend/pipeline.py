@@ -139,9 +139,30 @@ def pipeline(is_colorization: bool):
     if result.returncode != 0:
         print(f"Error in main_final.py: {result.stderr}", flush=True)
 
+    # Step 5: Re-encode final video
+    print("Re-encoding final video...", flush=True)
+    os.chdir("/kaggle/working")
+    generated_video_path = "output/output_final/video_Padding_True.mp4"
+    reencoded_video_path = os.path.splitext(generated_video_path)[0] + "_reencoded.mp4"
+    if os.path.exists(generated_video_path):
+        print("Re-encoding final video...", flush=True)
+        try:
+            result = subprocess.run([
+                "ffmpeg", "-i", generated_video_path, "-c:v", "libx264", "-c:a", "aac",
+                "-strict", "experimental", reencoded_video_path
+            ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            print("Re-encoding completed successfully.", flush=True)
+            print(result.stdout.decode())
+        except subprocess.CalledProcessError as e:
+            print(f"Error during video re-encoding: {e}", flush=True)
+            print(e.stderr.decode())
+            return False
+    else:
+        print("Generated video not found for re-encoding.", flush=True)
+        return False
+    
     print("Pipeline completed successfully!", flush=True)
     return True
-
 
 if __name__ == "__main__":
     pipeline(is_colorization=True)
