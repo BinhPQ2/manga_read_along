@@ -106,7 +106,13 @@ def pipeline(is_colorization: bool):
     # Step 3: Text-to-speech
     print("Setting up text-to-speech...", flush=True)
     with patch('builtins.input', return_value='y'):
-        tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
+        #_ = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=torch.cuda.is_available())
+        try:
+            print("Setting up text-to-speech...", flush=True)
+            _ = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=torch.cuda.is_available())
+        except Exception as e:
+            print(f"Error during TTS setup: {e}", flush=True)
+
 
     print("Running text_to_speech.py...", flush=True)
     result = subprocess.run([
