@@ -1,31 +1,30 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from typing import List
+from src.backend.pipeline import pipeline
 
 app = FastAPI()
 
-class UserPromptRequest(BaseModel):
-    question: str
+class GenerateMangaRequest(BaseModel):
+    is_colorization: bool
 
-class AssistantResponse(BaseModel):
-    answer: str
-    url: List[str]
+class GenerateResponse(BaseModel):
+    is_success: bool
 
 @app.get("/")
 def read_root():
-    return {"Hello": "World"}
+    return {"message": "Hello World!"}
 
-# @app.post("/qa-vn-news", response_model=AssistantResponse)
-# def get_response(data: UserPromptRequest):
-#     try:
-#         print(f"Received question: {data.question}")
-#         answer, url = pipeline(data.question)
-#         print(f"Response answer: {answer}")
-#         print(f"Response url: {url}")
-#         return AssistantResponse(
-#             answer=remove_special_characters(answer),
-#             url=url
-#         )
-#     except Exception as e:
-#         raise HTTPException(status_code=500, detail=str(e))
-    
+@app.post("/generate-manga", response_model=GenerateResponse)
+def get_response(data: GenerateMangaRequest):
+    try:
+        is_colorization = data.is_colorization
+        print(f"Received isColorization: {is_colorization}", flush=True)
+        is_success = pipeline(is_colorization)
+        print(f"Response is_success: {is_success}", flush=True)
+        if is_success:
+            return GenerateResponse(is_success=True)
+        else:
+            return GenerateResponse(is_success=False)
+    except Exception as e:
+        print(f"Exception during pipeline execution: {e}", flush=True) 
+        raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
