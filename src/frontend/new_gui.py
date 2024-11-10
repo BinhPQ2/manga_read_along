@@ -89,31 +89,44 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
         progress_text = "Generating video in progress. Please wait."
         my_bar = st.progress(0, text=progress_text)
 
-        for percent_complete in range(10):
-            time.sleep(0.05)  # Initial loading
-            my_bar.progress(percent_complete * 10, text=progress_text)
-
+        # Execute the pipeline script with real-time logging
         print("Running pipeline script...")
+        result = subprocess.Popen(["python", "pipeline.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
 
-        # Execute the pipeline script
-        result = subprocess.run(["python", "pipeline.py"], capture_output=True, text=True)
-
-        print(result.stdout)
-
-        my_bar.empty()
-        
-        # Check if pipeline script was successful
+        # Track progress and display output in real-time
+        percent_complete = 0
         generated_video_path = "output/output_final/video_Padding_True.mp4"
+        
+        while not os.path.exists(generated_video_path):
+            # Read and display each line of output as it’s produced
+            line = result.stdout.readline()
+            if line:
+                print(line.strip())  # Print the line from stdout
+
+            # Update the progress bar
+            time.sleep(1)  # Wait for 1 second between progress updates
+            percent_complete += 10
+            my_bar.progress(min(percent_complete, 100), text=progress_text)
+
+            if percent_complete >= 100:  # Reset progress bar after each cycle
+                percent_complete = 0
+
+        # Wait for the process to complete and capture any remaining output
+        stdout, stderr = result.communicate()
+        print(stdout)
+        print(stderr)
+
+        # Clear the progress bar
+        my_bar.empty()
+
+        # Check if the video was generated successfully
         if result.returncode == 0 and os.path.exists(generated_video_path):
-            # Set the video URL to the generated video if it exists
             st.session_state.video_url = generated_video_path
             st.session_state.progress_complete = True
             st.success("Video generated successfully!")
         else:
-            # If generation fails or the file doesn't exist, set the default video URL
             st.session_state.video_url = "https://files.vuxlinh.com/demo.mp4"
             st.warning("An error occurred or the video file was not found. Displaying the default video.")
-
     else:
         st.error("Please fill in all required fields before generating the video.")
 

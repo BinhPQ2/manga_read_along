@@ -117,6 +117,7 @@ result = subprocess.run([
     "-o", audio_path,
     "-m", "male_character"
 ])
+
 if result.returncode != 0:
     print(f"Error in text_to_speech.py: {result.stderr}")
 
