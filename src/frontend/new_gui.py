@@ -179,24 +179,22 @@ if right.button("Clear", icon="💣", use_container_width=True):
     st.session_state.video_url = ""
     st.session_state.progress_complete = False
 
-# st.header("Play Output Video")
-# if os.path.exists(generated_video_path):
-#     st.session_state.video_url = generated_video_path
-#     if os.path.isfile(st.session_state.video_url):
-#         with open(st.session_state.video_url, "rb") as video_file:
-#             video_bytes = video_file.read()
-#         st.video(video_bytes)
-#     else:
-#         st.write("Video file found but could not be read. Please check the file permissions or try regenerating.")
-# else:
-#     st.write("No video to display. Click 'Generate Video' to load the video.")
 
-# Paths
-# Change directory to /kaggle/working
-os.chdir("/kaggle/working")
+reencoded_video_path = "/kaggle/working/output/output_final/video_Padding_True_audio_reencoded.mp4"
+st.write(f"File {reencoded_video_path} - exists: {os.path.exists(reencoded_video_path)}")
+st.header("Play Output Video")
+if os.path.exists(reencoded_video_path):
+    st.session_state.video_url = reencoded_video_path
+    if os.path.isfile(st.session_state.video_url):
+        with open(st.session_state.video_url, "rb") as video_file:
+            video_bytes = video_file.read()
+        st.video(video_bytes)
+    else:
+        st.write("Video file found but could not be read. Please check the file permissions or try regenerating.")
+else:
+    st.write("No video to display. Click 'Generate Video' to load the video.")
 
 # Define paths
-reencoded_video_path = "/kaggle/working/output/output_final/video_Padding_True_reencoded.mp4"
 
 # # Re-encode the video to ensure compatibility
 # def reencode_video(input_path, output_path):
@@ -212,17 +210,16 @@ reencoded_video_path = "/kaggle/working/output/output_final/video_Padding_True_r
 #             st.write(e.stderr.decode())
 
 # Load and display video in Streamlit
-def display_video(video_path):
-    if os.path.exists(video_path):
-        with open(video_path, "rb") as video_file:
-            video_bytes = video_file.read()
-        st.video(video_bytes)
-    else:
-        st.write("Video file not found. Click 'Generate Video' to try again.")
+# def display_video(video_path):
+#     if os.path.exists(video_path):
+#         with open(video_path, "rb") as video_file:
+#             video_bytes = video_file.read()
+#         st.video(video_bytes)
+#     else:
+#         st.write("Video file not found. Click 'Generate Video' to try again.")
 
-# Check if generated video exists, re-encode, and display
-st.write(f"123_Generated video found at: {reencoded_video_path}")
-if os.path.exists(reencoded_video_path):
-    st.header("Play Output Video")
-    st.write(f"Generated video found at: {reencoded_video_path}")
-    display_video(reencoded_video_path)
+# st.write(f"File {reencoded_video_path} - exists: {os.path.exists(reencoded_video_path)}")
+# if os.path.exists(reencoded_video_path):
+#     st.header("Play Output Video")
+#     st.write(f"Generated video found at: {reencoded_video_path}")
+#     display_video(reencoded_video_path)
