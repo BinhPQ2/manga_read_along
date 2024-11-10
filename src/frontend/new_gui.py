@@ -91,7 +91,7 @@ def call_api(url, colorize, timeout, queue):
         queue.put({"is_success": False})  # Put a failure response in the queue if there's an error
 
 # Assume necessary imports, paths, and setup code are here
-
+generated_video_path = "/kaggle/working/output/output_final/video_Padding_True.mp4"
 if left.button("Generate Video", icon="🔥", use_container_width=True):
     if chapter_files and character_files:
         st.session_state.video_url = ""
@@ -139,7 +139,7 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
 
         # Check if the video was generated successfully
         if data.get("is_success"):
-            generated_video_path = "/kaggle/working/output/output_final/video_Padding_True.mp4"
+            #generated_video_path = "/kaggle/working/output/output_final/video_Padding_True.mp4"
             st.session_state.video_url = generated_video_path
             st.session_state.progress_complete = True
             st.success("Video generated successfully!")
@@ -157,14 +157,23 @@ if right.button("Clear", icon="💣", use_container_width=True):
 
 st.header("Play Output Video")
 if st.session_state.video_url:
-    video_html = f"""
-        <div style="width: 100%; height: auto;">
-            <video width="100%" height="720" controls>
-                <source src="{st.session_state.video_url}" type="video/mp4">
-                Your browser does not support the video tag.
-            </video>
-        </div>
-    """
-    st.markdown(video_html, unsafe_allow_html=True)
+    if st.session_state.video_url.startswith("http"):
+        # For online video URLs, embed using HTML
+        video_html = f"""
+            <div style="width: 100%; height: auto;">
+                <video width="100%" height="720" controls>
+                    <source src="{st.session_state.video_url}" type="video/mp4">
+                    Your browser does not support the video tag.
+                </video>
+            </div>
+        """
+        st.markdown(video_html, unsafe_allow_html=True)
+    elif os.path.exists(generated_video_path):
+        with open(generated_video_path, "rb") as video_file:
+            video_bytes = video_file.read()
+        st.video(video_bytes)
+    else:
+        # If video file is missing, notify the user
+        st.write("Video file not found. Click 'Generate Video' to try again.")
 else:
     st.write("No video to display. Click 'Generate Video' to load the video.")
