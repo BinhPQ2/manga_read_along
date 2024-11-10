@@ -74,18 +74,13 @@ left, right = st.columns(2)
 
 def wait_for_api_response(api_url, colorize, timeout=600):
     """Send request to the API and wait for response within the specified timeout."""
-    start_time = time.time()
-    while True:
-        try:
-            response = requests.post(api_url, json={"is_colorization": colorize})
-            response.raise_for_status()
-            data = response.json()
-            return data
-        except requests.exceptions.RequestException:
-            # Check for timeout (10 minutes)
-            if time.time() - start_time > timeout:
-                return None  # Return None if API request times out
-            time.sleep(5)  # Retry every 5 seconds
+    try:
+        response = requests.post(api_url, json={"is_colorization": colorize}, timeout=timeout)
+        response.raise_for_status()
+        return response.json()
+    except requests.exceptions.RequestException as e:
+        st.error(f"An error occurred: {e}")
+        return None
 
 # Assume necessary imports, paths, and setup code are here
 
@@ -102,45 +97,36 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
         with open(os.path.join(character_path, "character_names.txt"), "w") as f:
             f.write(character_names)
 
-        # Initialize progress bar and text placeholder
+        # Initialize progress bar and progress text
         progress_text = "Generating video in progress. Please wait."
         my_bar = st.progress(0)
-        progress_loop_active = True  # To control the progress loop
+        progress = 0  # Start progress
 
-        def run_progress_bar():
-            """Simulate a continuous progress bar loop until stopped."""
-            progress = 0
-            while progress_loop_active:
-                progress = (progress + 10) % 100
-                my_bar.progress(progress)
-                time.sleep(0.1)  # Adjust speed as necessary
+        # Start time tracking for timeout
+        start_time = time.time()
+        timeout_seconds = 600  # 10 minutes
 
-        # Start progress bar loop in a separate thread
-        import threading
-        progress_thread = threading.Thread(target=run_progress_bar)
-        progress_thread.start()
+        # Run progress bar in increments while waiting for the API
+        while time.time() - start_time < timeout_seconds:
+            # Update the progress bar
+            progress += 5
+            my_bar.progress(progress % 100, text=progress_text)  # Modulo for looping
+            time.sleep(1)  # Adjust speed for smooth progress bar animation
 
-        # Call the API and wait for the response, with a 10-minute timeout
-        data = wait_for_api_response("http://localhost:8000/generate-manga", colorize, timeout=600)
-
-        # Stop the progress bar loop
-        progress_loop_active = False
-        progress_thread.join()  # Ensure the progress thread stops
-
-        # Clear the progress bar
-        my_bar.empty()
-
-        # Check the API response and display the appropriate video
-        generated_video_path = "output/output_final/video_Padding_True.mp4"
-        if data and data.get("is_success") and os.path.exists(generated_video_path):
-            st.session_state.video_url = generated_video_path
-            st.session_state.progress_complete = True
-            st.success("Video generated successfully!")
-        elif data is None:
-            st.error("The request timed out after 10 minutes. Please try again later.")
+            # Check if we have a successful response from the API
+            data = wait_for_api_response("http://localhost:8000/generate-manga", colorize, timeout=600)
+            if data and data.get("is_success"):
+                # Clear progress and show video if API returned success
+                my_bar.empty()
+                st.session_state.video_url = "output/output_final/video_Padding_True.mp4"
+                st.session_state.progress_complete = True
+                st.success("Video generated successfully!")
+                break
         else:
+            # Timeout reached, display a message and set the default video URL
+            my_bar.empty()
             st.session_state.video_url = "https://files.vuxlinh.com/demo.mp4"
-            st.warning("An error occurred during video generation. Displaying the default video.")
+            st.warning("An error occurred or the video file was not found. Displaying the default video.")
 
     else:
         st.error("Please fill in all required fields before generating the video.")
