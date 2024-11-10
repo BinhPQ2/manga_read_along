@@ -3,7 +3,6 @@ from streamlit_lottie import st_lottie
 import requests
 import time
 import os
-import subprocess
 
 @st.cache_data()
 def load_lottieurl(url: str):
@@ -86,54 +85,37 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
         with open(os.path.join(character_path, "character_names.txt"), "w") as f:
             f.write(character_names)
 
-        # Run the pipeline script
+        # Run the API request
         progress_text = "Generating video in progress. Please wait."
         my_bar = st.progress(0, text=progress_text)
 
-        # Execute the pipeline script with real-time logging
-        print("Running pipeline script...")
-        result = subprocess.Popen(
-            ["python", "pipeline.py"],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            bufsize=1,  # Line-buffered output
-            universal_newlines=True
-        )
+        try:
+            # Send API request to generate video
+            response = requests.post(
+                "http://localhost:8000/generate-manga",
+                json={"is_colorization": colorize}
+            )
 
-        # Track progress and display output in real-time
-        percent_complete = 0
-        generated_video_path = "output/output_final/video_Padding_True.mp4"
-        
-        while not os.path.exists(generated_video_path):
-            # Read each line from stdout and update progress
-            line = result.stdout.readline()
-            if line:
-                print(line.strip())  # Print the line from stdout
+            response.raise_for_status()
+            print("RESPONSE", response.json())
+            data = response.json()
 
-            # Update the progress bar
-            time.sleep(1)  # Wait for 1 second between progress updates
-            percent_complete += 10
-            my_bar.progress(min(percent_complete, 100), text=progress_text)
+            # Determine video URL based on API response
+            generated_video_path = "output/output_final/video_Padding_True.mp4"
+            if data.get("is_success") and os.path.exists(generated_video_path):
+                st.session_state.video_url = generated_video_path
+                st.session_state.progress_complete = True
+                st.success("Video generated successfully!")
+            else:
+                st.session_state.video_url = "https://files.vuxlinh.com/demo.mp4"
+                st.warning("An error occurred during video generation. Displaying the default video.")
 
-            if percent_complete >= 100:  # Reset progress bar after each cycle
-                percent_complete = 0
-
-        # Wait for the process to complete and capture any remaining output
-        stdout, stderr = result.communicate()
-        print("Standard Output:", stdout)
-        print("Standard Error:", stderr)
+        except requests.exceptions.RequestException as e:
+            st.error(f"An error occurred: {e}")
 
         # Clear the progress bar
         my_bar.empty()
-
-        # Check if the video was generated successfully
-        if result.returncode == 0 and os.path.exists(generated_video_path):
-            st.session_state.video_url = generated_video_path
-            st.session_state.progress_complete = True
-            st.success("Video generated successfully!")
-        else:
-            st.session_state.video_url = "https://files.vuxlinh.com/demo.mp4"
-            st.warning("An error occurred or the video file was not found. Displaying the default video.")
+        
     else:
         st.error("Please fill in all required fields before generating the video.")
 
