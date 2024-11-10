@@ -157,26 +157,14 @@ if right.button("Clear", icon="💣", use_container_width=True):
 
 st.header("Play Output Video")
 if st.session_state.video_url:
-    try:
-        # Copy video file to a temporary directory accessible by the browser
-        temp_video_path = tempfile.NamedTemporaryFile(delete=False, suffix=".mp4")
-        shutil.copy(st.session_state.video_url, temp_video_path.name)
-        
-        # Create an accessible URL for the video
-        video_url = f"file://{temp_video_path.name}"
-        
-        # Embed the video in HTML with the URL
-        video_html = f"""
-            <div style="width: 100%; height: auto;">
-                <video width="100%" height="720" controls>
-                    <source src="{video_url}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
-        """
-        st.markdown(video_html, unsafe_allow_html=True)
-        
-    except FileNotFoundError:
-        st.write("Video file not found. Please try generating the video again.")
+    video_html = f"""
+        <div style="width: 100%; height: auto;">
+            <video width="100%" height="720" controls>
+                <source src="{st.session_state.video_url}" type="video/mp4">
+                Your browser does not support the video tag.
+            </video>
+        </div>
+    """
+    st.markdown(video_html, unsafe_allow_html=True)
 else:
     st.write("No video to display. Click 'Generate Video' to load the video.")
