@@ -1,3 +1,5 @@
+import threading
+from queue import Queue
 import streamlit as st
 from streamlit_lottie import st_lottie
 import requests
@@ -72,20 +74,19 @@ if "progress_complete" not in st.session_state:
 
 left, right = st.columns(2)
 
-def wait_for_api_response(url, colorize, timeout=600):
-    start_time = time.time()
-    while time.time() - start_time < timeout:
-        try:
-            response = requests.post(
-                url,
-                json={"is_colorization": colorize},
-                timeout=5  # Keep each request timeout short to keep the progress bar active
-            )
-            response.raise_for_status()
-            return response.json()
-        except requests.exceptions.RequestException:
-            time.sleep(1)  # Wait briefly before retrying
-    return {"is_success": False}  # Return a failure response if the timeout is reached
+def call_api(url, colorize, timeout, queue):
+    """Call the API and put the response in a queue."""
+    try:
+        response = requests.post(
+            url,
+            json={"is_colorization": colorize},
+            timeout=timeout
+        )
+        response.raise_for_status()
+        queue.put(response.json())  # Put the response in the queue
+    except requests.exceptions.RequestException as e:
+        print(f"API request failed: {e}")
+        queue.put({"is_success": False})  # Put a failure response in the queue if there's an error
 
 # Assume necessary imports, paths, and setup code are here
 
@@ -102,7 +103,7 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
         with open(os.path.join(character_path, "character_names.txt"), "w") as f:
             f.write(character_names)
 
-        # Initialize progress bar
+        # Initialize progress bar and progress text
         progress_text = "Generating video in progress. Please wait."
         my_bar = st.progress(0)
         progress = 0  # Start progress
@@ -111,25 +112,37 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
         start_time = time.time()
         timeout_seconds = 600  # 10 minutes
 
-        # Run progress bar in increments while waiting for the API
-        while time.time() - start_time < timeout_seconds:
+        # Queue to retrieve the response from the thread
+        response_queue = Queue()
+
+        # Start API call in a separate thread
+        api_thread = threading.Thread(target=call_api, args=("http://localhost:8000/generate-manga", colorize, timeout_seconds, response_queue))
+        api_thread.start()
+
+        # Run progress bar in increments while waiting for the API response
+        while (time.time() - start_time < timeout_seconds) and response_queue.empty():
             # Update the progress bar in a loop
             progress = (progress + 5) % 100
             my_bar.progress(progress, text=progress_text)
             time.sleep(1)  # Adjust speed for smooth progress bar animation
 
-            # Check if we have a successful response from the API
-            data = wait_for_api_response("http://localhost:8000/generate-manga", colorize, timeout=timeout_seconds)
-            if data and data.get("is_success"):
-                # Clear progress and show video if API returned success
-                my_bar.empty()
-                st.session_state.video_url = "output/output_final/video_Padding_True.mp4"
-                st.session_state.progress_complete = True
-                st.success("Video generated successfully!")
-                break
+        # Get the response from the queue if available
+        if not response_queue.empty():
+            data = response_queue.get()
         else:
-            # Timeout reached, display a message and set the default video URL
-            my_bar.empty()
+            data = {"is_success": False}  # Timeout, set failure response
+
+        # Clear the progress bar
+        my_bar.empty()
+
+        # Check if the video was generated successfully
+        generated_video_path = "output/output_final/video_Padding_True.mp4"
+        if data.get("is_success") and os.path.exists(generated_video_path):
+            st.session_state.video_url = generated_video_path
+            st.session_state.progress_complete = True
+            st.success("Video generated successfully!")
+        else:
+            # If generation fails or the file doesn't exist, set the default video URL
             st.session_state.video_url = "https://files.vuxlinh.com/demo.mp4"
             st.warning("An error occurred or the video file was not found. Displaying the default video.")
 
