@@ -1,6 +1,6 @@
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
-from src.backend.pipeline import pipeline
+from src.backend.pipeline import pipeline  # Ensure pipeline is correctly imported
 
 app = FastAPI()
 
@@ -18,11 +18,13 @@ def read_root():
 def get_response(data: GenerateMangaRequest):
     try:
         is_colorization = data.is_colorization
-        print(f"Received isColorization: {data.is_colorization}")
+        print(f"Received isColorization: {is_colorization}", flush=True)
         is_success = pipeline(is_colorization)
-        print(f"Response answer: {is_success}")
-        return GenerateResponse(
-            is_success
-        )
+        print(f"Response answer: {is_success}", flush=True)
+        if is_success:
+            return GenerateResponse(is_success=True)
+        else:
+            return GenerateResponse(is_success=False)
     except Exception as e:
-        raise HTTPException(status_code=500, detail=str(e))
+        print(f"Exception during pipeline execution: {e}", flush=True) 
+        raise HTTPException(status_code=500, detail=f"Pipeline error: {str(e)}")
