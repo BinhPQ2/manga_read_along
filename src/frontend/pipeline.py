@@ -31,10 +31,10 @@ os.makedirs(final_output_path, exist_ok=True)
 
 # Check for GPU availability
 device = "cuda" if torch.cuda.is_available() else "cpu"
-print(f"Running on {device}")
+print(f"Running on {device}", flush=True)
 
 # Initialize submodules in `manga_read_along` and `manga-colorization-v2-custom`
-print("Initializing submodules...")
+print("Initializing submodules...", flush=True)
 for submodule in ["manga_read_along", "manga_read_along/manga-colorization-v2-custom"]:
     submodule_path = os.path.join(root_path, submodule)
     result = subprocess.run(["git", "submodule", "init"], cwd=submodule_path)
@@ -51,14 +51,14 @@ for submodule in ["manga_read_along", "manga_read_along/manga-colorization-v2-cu
 #     print(f"Error installing dependencies: {result.stderr}")
 
 # Load MAGI model
-print("Loading MAGI model...")
+print("Loading MAGI model...", flush=True)
 magiv2 = AutoModel.from_pretrained("ragavsachdeva/magiv2", trust_remote_code=True).to(device).eval()
 
 # Download colorization model weights if they don’t already exist
 colorization_model_path = os.path.join(root_path, "manga_read_along/manga-colorization-v2-custom/networks/generator.zip")
 denoising_model_path = os.path.join(root_path, "manga_read_along/manga-colorization-v2-custom/denoising/models/net_rgb.pth")
 if not os.path.exists(colorization_model_path):
-    print("Downloading colorization model weights...")
+    print("Downloading colorization model weights...", flush=True)
     subprocess.run([
         "gdown", "1qmxUEKADkEM4iYLp1fpPLLKnfZ6tcF-t",
         "-O", colorization_model_path
@@ -75,7 +75,7 @@ _ = subprocess.run(["pip", "install", "-q", "numpy==1.24.2", "tensorflow==2.10.0
     
     
 # Step 1: Run magiv2.py
-print("Running magiv2.py...")
+print("Running magiv2.py...", flush=True)
 result = subprocess.run([
     "python", os.path.join(root_path, "manga_read_along/magi_functional/magiv2.py"),
     "--image", raw_image_path,
@@ -85,10 +85,10 @@ result = subprocess.run([
     "--transcript", transcript_path
 ])
 if result.returncode != 0:
-    print(f"Error in magiv2.py: {result.stderr}")
+    print(f"Error in magiv2.py: {result.stderr}", flush=True)
 
 # Step 2: Run inference_v2.py for colorization
-print("Running inference_v2.py...")
+print("Running inference_v2.py...", flush=True)
 result = subprocess.run([
     "python", os.path.join(root_path, "manga_read_along/manga-colorization-v2-custom/inference_v2.py"),
     "-p", raw_image_rename_path,
@@ -99,16 +99,16 @@ result = subprocess.run([
     "--gpu"
 ])
 if result.returncode != 0:
-    print(f"Error in inference_v2.py: {result.stderr}")
+    print(f"Error in inference_v2.py: {result.stderr}", flush=True)
 
 _ = subprocess.run(["pip", "install", "-q", "packaging==21.3", "--upgrade"]) 
     
 # Step 3: Text-to-speech
-print("Setting up text-to-speech...")
+print("Setting up text-to-speech...", flush=True)
 with patch('builtins.input', return_value='y'):
     tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
 
-print("Running text_to_speech.py...")
+print("Running text_to_speech.py...", flush=True)
 result = subprocess.run([
     "python", os.path.join(root_path, "manga_read_along/magi_functional/text_to_speech.py"),
     "-i", raw_image_rename_path,
@@ -119,10 +119,10 @@ result = subprocess.run([
 ])
 
 if result.returncode != 0:
-    print(f"Error in text_to_speech.py: {result.stderr}")
+    print(f"Error in text_to_speech.py: {result.stderr}", flush=True)
 
 # Step 4: Combine in main_final.py
-print("Running main_final.py...")
+print("Running main_final.py...", flush=True)
 result = subprocess.run([
     "python", os.path.join(root_path, "manga_read_along/magi_functional/main.py"),
     "-i", colorized_path,
@@ -131,6 +131,6 @@ result = subprocess.run([
     "-s", final_output_path
 ])
 if result.returncode != 0:
-    print(f"Error in main_final.py: {result.stderr}")
+    print(f"Error in main_final.py: {result.stderr}", flush=True)
 
-print("Pipeline completed successfully!")
+print("Pipeline completed successfully!", flush=True)

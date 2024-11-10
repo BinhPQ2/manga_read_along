@@ -16,6 +16,7 @@ def load_lottieurl(url: str):
 st.set_page_config(page_title="Manga Video Generator Interface", page_icon=":movie_camera:", layout="wide")
 st.title(":movie_camera: Manga Video Generator Interface")
 
+# Sidebar setup
 with st.sidebar:
     lottie = load_lottieurl("https://assets6.lottiefiles.com/packages/lf20_cjnxwrkt.json")
     st_lottie(lottie)
@@ -64,7 +65,7 @@ def save_uploaded_files(files, directory):
         with open(os.path.join(directory, file.name), "wb") as f:
             f.write(file.getbuffer())
 
-# Save files when Generate Video is clicked
+# Initialize session state
 if "video_url" not in st.session_state:
     st.session_state.video_url = ""
 if "progress_complete" not in st.session_state:
@@ -91,14 +92,20 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
 
         # Execute the pipeline script with real-time logging
         print("Running pipeline script...")
-        result = subprocess.Popen(["python", "pipeline.py"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True)
+        result = subprocess.Popen(
+            ["python", "pipeline.py"],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            bufsize=1,  # Line-buffered output
+            universal_newlines=True
+        )
 
         # Track progress and display output in real-time
         percent_complete = 0
         generated_video_path = "output/output_final/video_Padding_True.mp4"
         
         while not os.path.exists(generated_video_path):
-            # Read and display each line of output as it’s produced
+            # Read each line from stdout and update progress
             line = result.stdout.readline()
             if line:
                 print(line.strip())  # Print the line from stdout
@@ -113,8 +120,8 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
 
         # Wait for the process to complete and capture any remaining output
         stdout, stderr = result.communicate()
-        print(stdout)
-        print(stderr)
+        print("Standard Output:", stdout)
+        print("Standard Error:", stderr)
 
         # Clear the progress bar
         my_bar.empty()
@@ -133,7 +140,6 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
 if right.button("Clear", icon="💣", use_container_width=True):
     st.session_state.video_url = ""
     st.session_state.progress_complete = False
-    st.query_params.update({})
 
 st.header("Play Output Video")
 if st.session_state.video_url:
