@@ -7,6 +7,7 @@ import time
 import os
 import tempfile
 import shutil
+import subprocess
 
 @st.cache_data()
 def load_lottieurl(url: str):
@@ -178,14 +179,37 @@ if right.button("Clear", icon="💣", use_container_width=True):
     st.session_state.video_url = ""
     st.session_state.progress_complete = False
 
-st.header("Play Output Video")
-if os.path.exists(generated_video_path):
-    st.session_state.video_url = generated_video_path
-    if os.path.isfile(st.session_state.video_url):
-        with open(st.session_state.video_url, "rb") as video_file:
+# st.header("Play Output Video")
+# if os.path.exists(generated_video_path):
+#     st.session_state.video_url = generated_video_path
+#     if os.path.isfile(st.session_state.video_url):
+#         with open(st.session_state.video_url, "rb") as video_file:
+#             video_bytes = video_file.read()
+#         st.video(video_bytes)
+#     else:
+#         st.write("Video file found but could not be read. Please check the file permissions or try regenerating.")
+# else:
+#     st.write("No video to display. Click 'Generate Video' to load the video.")
+
+reencoded_video_path = os.path.splitext(generated_video_path)[0] + "_reencoded.mp4"
+def reencode_video(input_path, output_path):
+    if not os.path.exists(output_path):
+        try:
+            subprocess.run([
+                "ffmpeg", "-i", input_path, "-c:v", "libx264", "-c:a", "aac", "-strict", "experimental", output_path
+            ], check=True)
+        except subprocess.CalledProcessError:
+            st.error("Error during video re-encoding. Please check the input file.")
+
+def display_video(video_path):
+    if os.path.exists(video_path):
+        with open(video_path, "rb") as video_file:
             video_bytes = video_file.read()
         st.video(video_bytes)
     else:
-        st.write("Video file found but could not be read. Please check the file permissions or try regenerating.")
-else:
-    st.write("No video to display. Click 'Generate Video' to load the video.")
+        st.write("Video file not found. Click 'Generate Video' to try again.")
+
+# Re-encode and display video
+reencode_video(generated_video_path, reencoded_video_path)
+st.header("Play Output Video")
+display_video(reencoded_video_path)
