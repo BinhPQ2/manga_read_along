@@ -72,15 +72,20 @@ if "progress_complete" not in st.session_state:
 
 left, right = st.columns(2)
 
-def wait_for_api_response(api_url, colorize, timeout=600):
-    """Send request to the API and wait for response within the specified timeout."""
-    try:
-        response = requests.post(api_url, json={"is_colorization": colorize}, timeout=timeout)
-        response.raise_for_status()
-        return response.json()
-    except requests.exceptions.RequestException as e:
-        st.error(f"An error occurred: {e}")
-        return None
+def wait_for_api_response(url, colorize, timeout=600):
+    start_time = time.time()
+    while time.time() - start_time < timeout:
+        try:
+            response = requests.post(
+                url,
+                json={"is_colorization": colorize},
+                timeout=5  # Keep each request timeout short to keep the progress bar active
+            )
+            response.raise_for_status()
+            return response.json()
+        except requests.exceptions.RequestException:
+            time.sleep(1)  # Wait briefly before retrying
+    return {"is_success": False}  # Return a failure response if the timeout is reached
 
 # Assume necessary imports, paths, and setup code are here
 
@@ -97,7 +102,7 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
         with open(os.path.join(character_path, "character_names.txt"), "w") as f:
             f.write(character_names)
 
-        # Initialize progress bar and progress text
+        # Initialize progress bar
         progress_text = "Generating video in progress. Please wait."
         my_bar = st.progress(0)
         progress = 0  # Start progress
@@ -108,13 +113,13 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
 
         # Run progress bar in increments while waiting for the API
         while time.time() - start_time < timeout_seconds:
-            # Update the progress bar
-            progress += 5
-            my_bar.progress(progress % 100, text=progress_text)  # Modulo for looping
+            # Update the progress bar in a loop
+            progress = (progress + 5) % 100
+            my_bar.progress(progress, text=progress_text)
             time.sleep(1)  # Adjust speed for smooth progress bar animation
 
             # Check if we have a successful response from the API
-            data = wait_for_api_response("http://localhost:8000/generate-manga", colorize, timeout=600)
+            data = wait_for_api_response("http://localhost:8000/generate-manga", colorize, timeout=timeout_seconds)
             if data and data.get("is_success"):
                 # Clear progress and show video if API returned success
                 my_bar.empty()
