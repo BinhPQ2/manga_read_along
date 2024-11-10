@@ -78,8 +78,8 @@ if not character_files:
     st.warning("⚠️ Please upload images for Character Reference.")
 
 # Character names input
-st.header("Character Names")
-character_names = st.text_input("Enter Character Names (comma separated)", placeholder="Luffy,Hank,Nami")
+# st.header("Character Names")
+#character_names = st.text_input("Enter Character Names (comma separated)", placeholder="Luffy,Hank,Nami")
 
 # Colorization option
 colorize = st.checkbox("Colorization")
@@ -124,8 +124,8 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
         save_uploaded_files(character_files, character_path)
 
         # Save character names
-        with open(os.path.join(character_path, "character_names.txt"), "w") as f:
-            f.write(character_names)
+        #with open(os.path.join(character_path, "character_names.txt"), "w") as f:
+        #    f.write(character_names)
 
         # Initialize progress bar and progress text
         progress_text = "Generating video in progress. Please wait."
@@ -179,24 +179,13 @@ if right.button("Clear", icon="💣", use_container_width=True):
     st.session_state.progress_complete = False
 
 st.header("Play Output Video")
-if st.session_state.video_url:
-    if st.session_state.video_url.startswith("http"):
-        # For online video URLs, embed using HTML
-        video_html = f"""
-            <div style="width: 100%; height: auto;">
-                <video width="100%" height="720" controls>
-                    <source src="{st.session_state.video_url}" type="video/mp4">
-                    Your browser does not support the video tag.
-                </video>
-            </div>
-        """
-        st.markdown(video_html, unsafe_allow_html=True)
-    elif os.path.exists(generated_video_path):
-        with open(generated_video_path, "rb") as video_file:
+if os.path.exists(generated_video_path):
+    st.session_state.video_url = generated_video_path
+    if os.path.isfile(st.session_state.video_url):
+        with open(st.session_state.video_url, "rb") as video_file:
             video_bytes = video_file.read()
         st.video(video_bytes)
     else:
-        # If video file is missing, notify the user
-        st.write("Video file not found. Click 'Generate Video' to try again.")
+        st.write("Video file found but could not be read. Please check the file permissions or try regenerating.")
 else:
     st.write("No video to display. Click 'Generate Video' to load the video.")
