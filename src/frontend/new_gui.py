@@ -192,7 +192,11 @@ if right.button("Clear", icon="💣", use_container_width=True):
 #     st.write("No video to display. Click 'Generate Video' to load the video.")
 
 # Paths
-generated_video_path = "/kaggle/working/output/output_final/video_Padding_True.mp4"
+# Change directory to /kaggle/working
+os.chdir("/kaggle/working")
+
+# Define paths
+generated_video_path = "output/output_final/video_Padding_True.mp4"
 reencoded_video_path = os.path.splitext(generated_video_path)[0] + "_reencoded.mp4"
 
 # Re-encode the video to ensure compatibility
@@ -219,6 +223,7 @@ def display_video(video_path):
 
 # Check if generated video exists, re-encode, and display
 if os.path.exists(generated_video_path):
+    time.sleep(5)
     st.header("Play Output Video")
     st.write(f"Generated video found at: {generated_video_path}")
     reencode_video(generated_video_path, reencoded_video_path)
