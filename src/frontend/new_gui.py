@@ -15,6 +15,28 @@ def load_lottieurl(url: str):
         return None
     return r.json()
 
+def clear_folders():
+    root_path = "/kaggle/working/"
+    raw_image_path = os.path.join(root_path, "manga_read_along/input/raw")
+    character_path = os.path.join(root_path, "manga_read_along/input/character")
+    raw_image_rename_path = os.path.join(root_path, "output/renamed")
+    colorized_path = os.path.join(root_path, "output/colorized")
+    json_path = os.path.join(root_path, "output/json")
+    transcript_path = os.path.join(root_path, "output/transcript")
+    audio_path = os.path.join(root_path, "output/audio")
+    final_output_path = os.path.join(root_path, "output/output_final")
+    folders_to_delete = [raw_image_path, character_path, raw_image_rename_path, colorized_path, json_path]
+
+    for folder in folders_to_delete:
+        if os.path.exists(folder):
+            shutil.rmtree(folder)
+            os.makedirs(folder)  # Re-create the empty folder
+
+    # Reset session state for video URL and progress
+    st.session_state.video_url = ""
+    st.session_state.progress_complete = False
+    st.success("Cleared all data and reset folders successfully.")
+
 # Set up Streamlit UI
 st.set_page_config(page_title="Manga Video Generator Interface", page_icon=":movie_camera:", layout="wide")
 st.title(":movie_camera: Manga Video Generator Interface")
@@ -152,6 +174,7 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
         st.error("Please fill in all required fields before generating the video.")
 
 if right.button("Clear", icon="💣", use_container_width=True):
+    clear_folders()
     st.session_state.video_url = ""
     st.session_state.progress_complete = False
 
