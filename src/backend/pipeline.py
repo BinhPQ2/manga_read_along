@@ -140,9 +140,7 @@ def pipeline(is_colorization: bool):
         print(f"Error in main_final.py: {result.stderr}", flush=True)
 
     # Step 5: Re-encode final video
-    print("Re-encoding final video...", flush=True)
-    os.chdir("/kaggle/working")
-    generated_video_path = "output/output_final/video_Padding_True.mp4"
+    generated_video_path = os.path.join(final_output_path, "video_Padding_True_audio.mp4")  # Use final output with audio merged
     reencoded_video_path = os.path.splitext(generated_video_path)[0] + "_reencoded.mp4"
     if os.path.exists(generated_video_path):
         print("Re-encoding final video...", flush=True)

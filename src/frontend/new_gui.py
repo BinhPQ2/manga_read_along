@@ -226,5 +226,3 @@ if os.path.exists(reencoded_video_path):
     st.header("Play Output Video")
     st.write(f"Generated video found at: {reencoded_video_path}")
     display_video(reencoded_video_path)
-else:
-    st.error("Generated video not found. Please generate it first.")
