@@ -136,7 +136,7 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
         my_bar.empty()
 
         # Check if the video was generated successfully
-        generated_video_path = "output/output_final/video_Padding_True.mp4"
+        generated_video_path = "/kaggle/working/output/output_final/video_Padding_True.mp4"
         if data.get("is_success") and os.path.exists(generated_video_path):
             st.session_state.video_url = generated_video_path
             st.session_state.progress_complete = True
