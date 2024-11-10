@@ -209,7 +209,7 @@ def display_video(video_path):
     else:
         st.write("Video file not found. Click 'Generate Video' to try again.")
 
-# Re-encode and display video
-reencode_video(generated_video_path, reencoded_video_path)
-st.header("Play Output Video")
-display_video(reencoded_video_path)
+if os.path.exists(generated_video_path):
+    st.header("Play Output Video")
+    reencode_video(generated_video_path, reencoded_video_path)
+    display_video(reencoded_video_path)
