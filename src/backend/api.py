@@ -6,6 +6,7 @@ app = FastAPI()
 
 class GenerateMangaRequest(BaseModel):
     is_colorization: bool
+    is_panel_view: bool
 
 class GenerateResponse(BaseModel):
     is_success: bool
@@ -18,8 +19,9 @@ def read_root():
 def get_response(data: GenerateMangaRequest):
     try:
         is_colorization = data.is_colorization
-        print(f"Received isColorization: {is_colorization}", flush=True)
-        is_success = pipeline(is_colorization)
+        is_panel_view = data.is_panel_view
+        print(f"Received isColorization: {is_colorization}, isPanelView: {is_panel_view}", flush=True)
+        is_success = pipeline(is_colorization, is_panel_view)
         print(f"Response is_success: {is_success}", flush=True)
         if is_success:
             return GenerateResponse(is_success=True)
