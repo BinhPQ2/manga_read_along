@@ -5,7 +5,7 @@ from transformers import AutoModel
 from TTS.api import TTS
 from unittest.mock import patch
 
-def pipeline(is_colorization: bool):
+def pipeline(is_colorization: bool, is_panel_view: bool):
     root_path = "/kaggle/working/"
 
     raw_image_path = os.path.join(root_path, "manga_read_along/input/raw")
@@ -117,7 +117,8 @@ def pipeline(is_colorization: bool):
         "-i", colorized_path,
         "-j", json_path,
         "-a", audio_path,
-        "-s", final_output_path
+        "-s", final_output_path, 
+        "-panel", is_panel_view
     ])
     if result.returncode != 0:
         print(f"Error in main_final.py: {result.stderr}", flush=True)

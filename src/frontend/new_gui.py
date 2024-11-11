@@ -42,12 +42,15 @@ def save_uploaded_files(files, directory):
         with open(os.path.join(directory, file.name), "wb") as f:
             f.write(file.getbuffer())
 
-def call_api(url, colorize, timeout, queue):
+def call_api(url, colorize, panel_view, timeout, queue):
     """Call the API and put the response in a queue."""
     try:
         response = requests.post(
             url,
-            json={"is_colorization": colorize},
+            json={
+                "is_colorization": colorize,
+                "is_panel_view": panel_view
+            },
             timeout=timeout
         )
         response.raise_for_status()
@@ -94,6 +97,7 @@ if not character_files:
 #character_names = st.text_input("Enter Character Names (comma separated)", placeholder="Luffy,Hank,Nami")
 
 colorize = st.checkbox("Colorization")
+panel_view = st.checkbox("Panel View")
 
 if "video_url" not in st.session_state:
     st.session_state.video_url = ""
@@ -124,7 +128,7 @@ if left.button("Generate Video", icon="🔥", use_container_width=True):
 
         response_queue = Queue()
 
-        api_thread = threading.Thread(target=call_api, args=("http://localhost:8000/generate-manga", colorize, timeout_seconds, response_queue))
+        api_thread = threading.Thread(target=call_api, args=("http://localhost:8000/generate-manga", colorize, panel_view, timeout_seconds, response_queue))
         api_thread.start()
 
         while (time.time() - start_time < timeout_seconds) and response_queue.empty():
