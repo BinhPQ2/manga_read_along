@@ -16,7 +16,7 @@ def pipeline(is_colorization: bool, is_panel_view: bool):
     transcript_path = os.path.join(root_path, "output/transcript")
     audio_path = os.path.join(root_path, "output/audio")
     final_output_path = os.path.join(root_path, "output/output_final")
-    voice_bank = os.path.join(root_path, "/kaggle/input/ravdess-emotional-speech-audio/")
+    voice_bank = os.path.join(root_path, "manga_read_along/input/voice_bank")
     transcript_file = os.path.join(transcript_path, "transcript.txt")
 
     os.makedirs(raw_image_rename_path, exist_ok=True)
@@ -40,7 +40,7 @@ def pipeline(is_colorization: bool, is_panel_view: bool):
             print(f"Error updating submodule {submodule}: {result.stderr}")
 
     print("Loading MAGI model...", flush=True)
-    _ = AutoModel.from_pretrained("ragavsachdeva/magiv2", trust_remote_code=True).to(device).eval()
+    magiv2 = AutoModel.from_pretrained("ragavsachdeva/magiv2", trust_remote_code=True).to(device).eval()
 
     colorization_model_path = os.path.join(root_path, "manga_read_along/manga-colorization-v2-custom/networks/generator.zip")
     denoising_model_path = os.path.join(root_path, "manga_read_along/manga-colorization-v2-custom/denoising/models/net_rgb.pth")
@@ -57,7 +57,6 @@ def pipeline(is_colorization: bool, is_panel_view: bool):
             "-O", denoising_model_path
         ])
   
-    _ = subprocess.run(["pip", "install", "-q", "numpy==1.24.2", "tensorflow==2.10.0", "--upgrade"])
         
     # Step 1: Run magiv2.py
     print("Running magiv2.py...", flush=True)
@@ -84,16 +83,18 @@ def pipeline(is_colorization: bool, is_panel_view: bool):
             "-ds", "0",
             "--gpu"
         ])
+
+        input_path_for_combine_step = colorized_path
+    else:
+        input_path_for_combine_step = raw_image_rename_path
         if result.returncode != 0:
             print(f"Error in inference_v2.py: {result.stderr}", flush=True)
-    
-    _ = subprocess.run(["pip", "install", "-q", "packaging==21.3", "--upgrade"]) 
     
     # Step 3: Text-to-speech
     print("Setting up text-to-speech...", flush=True)
     with patch('builtins.input', return_value='y'):
         try:
-            _ = TTS("tts_models/multilingual/multi-dataset/xtts_v2", gpu=torch.cuda.is_available())
+            tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
         except Exception as e:
             print(f"Error during TTS setup: {e}", flush=True)
 
@@ -114,11 +115,11 @@ def pipeline(is_colorization: bool, is_panel_view: bool):
     print("Running main.py...", flush=True)
     result = subprocess.run([
         "python", os.path.join(root_path, "manga_read_along/magi_functional/main.py"),
-        "-i", colorized_path,
+        "-i", input_path_for_combine_step,
         "-j", json_path,
         "-a", audio_path,
         "-s", final_output_path, 
-        "-panel", is_panel_view
+        "-panel", str(is_panel_view)
     ])
     if result.returncode != 0:
         print(f"Error in main_final.py: {result.stderr}", flush=True)
