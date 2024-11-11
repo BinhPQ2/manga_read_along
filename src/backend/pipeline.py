@@ -56,8 +56,6 @@ def pipeline(is_colorization: bool):
             "gdown", "161oyQcYpdkVdw8gKz_MA8RD-Wtg9XDp3",
             "-O", denoising_model_path
         ])
-  
-    _ = subprocess.run(["pip", "install", "-q", "numpy==1.24.2", "tensorflow==2.10.0", "--upgrade"])
         
     # Step 1: Run magiv2.py
     print("Running magiv2.py...", flush=True)
@@ -87,7 +85,6 @@ def pipeline(is_colorization: bool):
         if result.returncode != 0:
             print(f"Error in inference_v2.py: {result.stderr}", flush=True)
     
-    _ = subprocess.run(["pip", "install", "-q", "packaging==21.3", "--upgrade"]) 
     
     # Step 3: Text-to-speech
     print("Setting up text-to-speech...", flush=True)
