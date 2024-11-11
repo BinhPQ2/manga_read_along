@@ -6,3 +6,6 @@ gdown==5.2.0
 pydub==0.25.1
 numpy==1.26.4
 pandas==2.2.2
+streamlit_lottie
+streamlit
+pyngrok

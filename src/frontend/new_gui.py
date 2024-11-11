@@ -67,8 +67,6 @@ with st.sidebar:
     with st.expander("", expanded=True):
         st.write("23C11018 - Phạm Quốc Bình")
         st.write("23C11054 - Nguyễn Khắc Toàn")
-        st.write("23C15030 - Nguyễn Vũ Linh")
-        st.write("23C15037 - Bùi Trọng Quý")
     st.header("Instructions")
     st.write("**Step 1**: Upload Chapter Pages and Character Reference Images.")
     st.write("**Step 2**: Enter Character Names (comma separated).")
