@@ -9,9 +9,9 @@ from transformers import AutoModel
 from TTS.api import TTS
 from unittest.mock import patch
 from src.config import (
-    ROOT_PATH, RAW_IMAGE_PATH, CHARACTER_PATH, VOICE_BANK, OUTPUT_PATH,
+    ROOT_PATH, RAW_IMAGE_PATH, CHARACTER_PATH, VOICE_BANK, COLORIZATION_MODEL_PATH, DENOISING_MODEL_PATH, OUTPUT_PATH,
     RAW_IMAGE_RENAME_PATH, COLORIZED_PATH, JSON_PATH, TRANSCRIPT_PATH,
-    TRANSCRIPT_FILE, AUDIO_PATH, FINAL_OUTPUT_PATH
+    TRANSCRIPT_FILE, AUDIO_PATH, FINAL_OUTPUT_PATH, GENERATED_VIDEO_PATH, REENCODED_VIDEO_PATH
 )
 
 def pipeline(is_colorization: bool, is_panel_view: bool):
@@ -50,6 +50,19 @@ def pipeline(is_colorization: bool, is_panel_view: bool):
 
     if is_colorization:
         print("Running inference_v2.py...", flush=True)
+
+        if not os.path.exists(COLORIZATION_MODEL_PATH):
+            print("Downloading colorization model weights...", flush=True)
+            subprocess.run([
+                "gdown", "1qmxUEKADkEM4iYLp1fpPLLKnfZ6tcF-t",
+                "-O", COLORIZATION_MODEL_PATH
+            ])
+        if not os.path.exists(DENOISING_MODEL_PATH):
+            os.makedirs(os.path.dirname(DENOISING_MODEL_PATH), exist_ok=True)
+            subprocess.run([
+                "gdown", "161oyQcYpdkVdw8gKz_MA8RD-Wtg9XDp3",
+                "-O", DENOISING_MODEL_PATH
+            ])
         result = subprocess.run([
             "python", os.path.join(ROOT_PATH, "manga_read_along/manga-colorization-v2-custom/inference_v2.py"),
             "-p", RAW_IMAGE_RENAME_PATH,
@@ -86,14 +99,12 @@ def pipeline(is_colorization: bool, is_panel_view: bool):
     if result.returncode != 0:
         print(f"Error in main.py: {result.stderr}", flush=True)
 
-    generated_video_path = os.path.join(FINAL_OUTPUT_PATH, "video_Padding_True_audio.mp4")
-    reencoded_video_path = os.path.splitext(generated_video_path)[0] + "_reencoded.mp4"
-    if os.path.exists(generated_video_path):
+    if os.path.exists(GENERATED_VIDEO_PATH):
         print("Re-encoding final video...", flush=True)
         try:
             result = subprocess.run([
-                "ffmpeg", "-i", generated_video_path, "-c:v", "libx264", "-c:a", "aac",
-                "-strict", "experimental", reencoded_video_path
+                "ffmpeg", "-i", GENERATED_VIDEO_PATH, "-c:v", "libx264", "-c:a", "aac",
+                "-strict", "experimental", REENCODED_VIDEO_PATH
             ], check=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
             print("Re-encoding completed successfully.", flush=True)
             print(result.stdout.decode())
