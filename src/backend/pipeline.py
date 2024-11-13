@@ -1,4 +1,5 @@
 import os
+import shutil
 import subprocess
 import torch
 from transformers import AutoModel
@@ -10,15 +11,21 @@ def pipeline(is_colorization: bool, is_panel_view: bool):
 
     raw_image_path = os.path.join(root_path, "manga_read_along/input/raw")
     character_path = os.path.join(root_path, "manga_read_along/input/character")
-    raw_image_rename_path = os.path.join(root_path, "output/renamed")
-    colorized_path = os.path.join(root_path, "output/colorized")
-    json_path = os.path.join(root_path, "output/json")
-    transcript_path = os.path.join(root_path, "output/transcript")
-    audio_path = os.path.join(root_path, "output/audio")
-    final_output_path = os.path.join(root_path, "output/output_final")
-    voice_bank = os.path.join(root_path, "manga_read_along/input/voice_bank")
-    transcript_file = os.path.join(transcript_path, "transcript.txt")
 
+    output_path = os.path.join(root_path, "output")
+    raw_image_rename_path = os.path.join(output_path, "output/renamed")
+    colorized_path = os.path.join(output_path, "output/colorized")
+    json_path = os.path.join(output_path, "output/json")
+    transcript_path = os.path.join(output_path, "output/transcript")
+    transcript_file = os.path.join(transcript_path, "transcript.txt")
+    audio_path = os.path.join(output_path, "output/audio")
+    final_output_path = os.path.join(output_path, "output/output_final")
+    voice_bank = os.path.join(output_path, "manga_read_along/input/voice_bank")
+
+    if os.path.exists(output_path):
+        shutil.rmtree(output_path)
+        
+    os.makedirs(output_path, exist_ok=True)
     os.makedirs(raw_image_rename_path, exist_ok=True)
     os.makedirs(colorized_path, exist_ok=True)
     os.makedirs(json_path, exist_ok=True)
