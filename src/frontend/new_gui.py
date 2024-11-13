@@ -65,7 +65,7 @@ st.title(":movie_camera: Manga Video Generator Interface")
 with st.sidebar:
     lottie = load_lottieurl("https://assets6.lottiefiles.com/packages/lf20_cjnxwrkt.json")
     st_lottie(lottie)
-    st.button("Upgrade to Plus", icon="🗝️", use_container_width=True)
+    # st.button("Upgrade to Plus", icon="🗝️", use_container_width=True)
     st.header("Team Info")
     with st.expander("", expanded=True):
         st.write("23C11018 - Phạm Quốc Bình")
