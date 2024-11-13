@@ -5,9 +5,11 @@ from streamlit_lottie import st_lottie
 import requests
 import time
 import os
+import sys
+sys.path.append(os.path.abspath('/kaggle/working/manga_read_along'))
+
 import shutil
-import subprocess
-from config import RAW_IMAGE_PATH, CHARACTER_PATH, GENERATED_VIDEO_PATH, REENCODED_VIDEO_PATH
+from src.config import RAW_IMAGE_PATH, CHARACTER_PATH, GENERATED_VIDEO_PATH, REENCODED_VIDEO_PATH
 
 @st.cache_data()
 def load_lottieurl(url: str):

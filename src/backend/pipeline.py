@@ -1,11 +1,14 @@
 import os
+import sys
+sys.path.append(os.path.abspath('/kaggle/working/manga_read_along'))
+
 import shutil
 import subprocess
 import torch
 from transformers import AutoModel
 from TTS.api import TTS
 from unittest.mock import patch
-from config import (
+from src.config import (
     ROOT_PATH, RAW_IMAGE_PATH, CHARACTER_PATH, VOICE_BANK, OUTPUT_PATH,
     RAW_IMAGE_RENAME_PATH, COLORIZED_PATH, JSON_PATH, TRANSCRIPT_PATH,
     TRANSCRIPT_FILE, AUDIO_PATH, FINAL_OUTPUT_PATH
