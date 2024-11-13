@@ -5,40 +5,27 @@ import torch
 from transformers import AutoModel
 from TTS.api import TTS
 from unittest.mock import patch
+from config import (
+    ROOT_PATH, RAW_IMAGE_PATH, CHARACTER_PATH, VOICE_BANK, OUTPUT_PATH,
+    RAW_IMAGE_RENAME_PATH, COLORIZED_PATH, JSON_PATH, TRANSCRIPT_PATH,
+    TRANSCRIPT_FILE, AUDIO_PATH, FINAL_OUTPUT_PATH
+)
 
 def pipeline(is_colorization: bool, is_panel_view: bool):
-    root_path = "/kaggle/working/"
-
-    raw_image_path = os.path.join(root_path, "manga_read_along/input/raw")
-    character_path = os.path.join(root_path, "manga_read_along/input/character")
-
-    output_path = os.path.join(root_path, "output")
-    raw_image_rename_path = os.path.join(output_path, "output/renamed")
-    colorized_path = os.path.join(output_path, "output/colorized")
-    json_path = os.path.join(output_path, "output/json")
-    transcript_path = os.path.join(output_path, "output/transcript")
-    transcript_file = os.path.join(transcript_path, "transcript.txt")
-    audio_path = os.path.join(output_path, "output/audio")
-    final_output_path = os.path.join(output_path, "output/output_final")
-    voice_bank = os.path.join(output_path, "manga_read_along/input/voice_bank")
-
-    if os.path.exists(output_path):
-        shutil.rmtree(output_path)
-        
-    os.makedirs(output_path, exist_ok=True)
-    os.makedirs(raw_image_rename_path, exist_ok=True)
-    os.makedirs(colorized_path, exist_ok=True)
-    os.makedirs(json_path, exist_ok=True)
-    os.makedirs(transcript_path, exist_ok=True)
-    os.makedirs(audio_path, exist_ok=True)
-    os.makedirs(final_output_path, exist_ok=True)
-
+    if os.path.exists(OUTPUT_PATH):
+        shutil.rmtree(OUTPUT_PATH)
+    os.makedirs(OUTPUT_PATH, exist_ok=True)
+    os.makedirs(RAW_IMAGE_RENAME_PATH, exist_ok=True)
+    os.makedirs(COLORIZED_PATH, exist_ok=True)
+    os.makedirs(JSON_PATH, exist_ok=True)
+    os.makedirs(TRANSCRIPT_PATH, exist_ok=True)
+    os.makedirs(AUDIO_PATH, exist_ok=True)
+    os.makedirs(FINAL_OUTPUT_PATH, exist_ok=True)
     device = "cuda" if torch.cuda.is_available() else "cpu"
     print(f"Running on {device}", flush=True)
-
     print("Initializing submodules...", flush=True)
     for submodule in ["manga_read_along", "manga_read_along/manga-colorization-v2-custom"]:
-        submodule_path = os.path.join(root_path, submodule)
+        submodule_path = os.path.join(ROOT_PATH, submodule)
         result = subprocess.run(["git", "submodule", "init"], cwd=submodule_path)
         if result.returncode != 0:
             print(f"Error initializing submodule {submodule}: {result.stderr}")
@@ -46,93 +33,57 @@ def pipeline(is_colorization: bool, is_panel_view: bool):
         if result.returncode != 0:
             print(f"Error updating submodule {submodule}: {result.stderr}")
 
-    print("Loading MAGI model...", flush=True)
-    magiv2 = AutoModel.from_pretrained("ragavsachdeva/magiv2", trust_remote_code=True).to(device).eval()
-
-    colorization_model_path = os.path.join(root_path, "manga_read_along/manga-colorization-v2-custom/networks/generator.zip")
-    denoising_model_path = os.path.join(root_path, "manga_read_along/manga-colorization-v2-custom/denoising/models/net_rgb.pth")
-    if not os.path.exists(colorization_model_path):
-        print("Downloading colorization model weights...", flush=True)
-        subprocess.run([
-            "gdown", "1qmxUEKADkEM4iYLp1fpPLLKnfZ6tcF-t",
-            "-O", colorization_model_path
-        ])
-    if not os.path.exists(denoising_model_path):
-        os.makedirs(os.path.dirname(denoising_model_path), exist_ok=True)
-        subprocess.run([
-            "gdown", "161oyQcYpdkVdw8gKz_MA8RD-Wtg9XDp3",
-            "-O", denoising_model_path
-        ])
-  
-        
-    # Step 1: Run magiv2.py
     print("Running magiv2.py...", flush=True)
     result = subprocess.run([
-        "python", os.path.join(root_path, "manga_read_along/magi_functional/magiv2.py"),
-        "--image", raw_image_path,
-        "--rename_image", raw_image_rename_path,
-        "--character", character_path,
-        "--json", json_path,
-        "--transcript", transcript_path
+        "python", os.path.join(ROOT_PATH, "manga_read_along/magi_functional/magiv2.py"),
+        "--image", RAW_IMAGE_PATH,
+        "--rename_image", RAW_IMAGE_RENAME_PATH,
+        "--character", CHARACTER_PATH,
+        "--json", JSON_PATH,
+        "--transcript", TRANSCRIPT_PATH
     ])
     if result.returncode != 0:
         print(f"Error in magiv2.py: {result.stderr}", flush=True)
-    
+
     if is_colorization:
-        # Step 2: Run inference_v2.py for colorization
         print("Running inference_v2.py...", flush=True)
         result = subprocess.run([
-            "python", os.path.join(root_path, "manga_read_along/manga-colorization-v2-custom/inference_v2.py"),
-            "-p", raw_image_rename_path,
-            "-des_path", denoising_model_path,
-            "-gen", colorization_model_path,
-            "-s", colorized_path,
+            "python", os.path.join(ROOT_PATH, "manga_read_along/manga-colorization-v2-custom/inference_v2.py"),
+            "-p", RAW_IMAGE_RENAME_PATH,
+            "-des_path", os.path.join(ROOT_PATH, "manga_read_along/manga-colorization-v2-custom/denoising/models/net_rgb.pth"),
+            "-gen", os.path.join(ROOT_PATH, "manga_read_along/manga-colorization-v2-custom/networks/generator.zip"),
+            "-s", COLORIZED_PATH,
             "-ds", "0",
             "--gpu"
         ])
-
-        input_path_for_combine_step = colorized_path
-    else:
-        input_path_for_combine_step = raw_image_rename_path
         if result.returncode != 0:
             print(f"Error in inference_v2.py: {result.stderr}", flush=True)
-    
-    # Step 3: Text-to-speech
-    print("Setting up text-to-speech...", flush=True)
-    with patch('builtins.input', return_value='y'):
-        try:
-            tts = TTS("tts_models/multilingual/multi-dataset/xtts_v2").to(device)
-        except Exception as e:
-            print(f"Error during TTS setup: {e}", flush=True)
 
     print("Running text_to_speech.py...", flush=True)
     result = subprocess.run([
-        "python", os.path.join(root_path, "manga_read_along/magi_functional/text_to_speech.py"),
-        "-i", raw_image_rename_path,
-        "-v", voice_bank,
-        "-t", transcript_file,
-        "-o", audio_path,
+        "python", os.path.join(ROOT_PATH, "manga_read_along/magi_functional/text_to_speech.py"),
+        "-i", RAW_IMAGE_RENAME_PATH,
+        "-v", VOICE_BANK,
+        "-t", TRANSCRIPT_FILE,
+        "-o", AUDIO_PATH,
         "-m", "male_character"
     ])
-
     if result.returncode != 0:
         print(f"Error in text_to_speech.py: {result.stderr}", flush=True)
 
-    # Step 4: Combine in main.py
     print("Running main.py...", flush=True)
     result = subprocess.run([
-        "python", os.path.join(root_path, "manga_read_along/magi_functional/main.py"),
-        "-i", input_path_for_combine_step,
-        "-j", json_path,
-        "-a", audio_path,
-        "-s", final_output_path, 
+        "python", os.path.join(ROOT_PATH, "manga_read_along/magi_functional/main.py"),
+        "-i", COLORIZED_PATH if is_colorization else RAW_IMAGE_RENAME_PATH,
+        "-j", JSON_PATH,
+        "-a", AUDIO_PATH,
+        "-s", FINAL_OUTPUT_PATH,
         "-panel", str(is_panel_view)
     ])
     if result.returncode != 0:
-        print(f"Error in main_final.py: {result.stderr}", flush=True)
+        print(f"Error in main.py: {result.stderr}", flush=True)
 
-    # Step 5: Re-encode final video
-    generated_video_path = os.path.join(final_output_path, "video_Padding_True_audio.mp4")  # Use final output with audio merged
+    generated_video_path = os.path.join(FINAL_OUTPUT_PATH, "video_Padding_True_audio.mp4")
     reencoded_video_path = os.path.splitext(generated_video_path)[0] + "_reencoded.mp4"
     if os.path.exists(generated_video_path):
         print("Re-encoding final video...", flush=True)
@@ -150,9 +101,9 @@ def pipeline(is_colorization: bool, is_panel_view: bool):
     else:
         print("Generated video not found for re-encoding.", flush=True)
         return False
-    
+
     print("Pipeline completed successfully!", flush=True)
     return True
 
 if __name__ == "__main__":
-    pipeline(is_colorization=True)
+    pipeline(is_colorization=True, is_panel_view=True)
