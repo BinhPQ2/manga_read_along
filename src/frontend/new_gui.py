@@ -65,20 +65,24 @@ st.title(":movie_camera: Manga Video Generator Interface")
 with st.sidebar:
     lottie = load_lottieurl("https://assets6.lottiefiles.com/packages/lf20_cjnxwrkt.json")
     st_lottie(lottie)
-    st.button("Upgrade to Plus", icon="🗝️", use_container_width=True)
+    # st.button("Upgrade to Plus", icon="🗝️", use_container_width=True)
     st.header("Team Info")
     with st.expander("", expanded=True):
         st.write("23C11018 - Phạm Quốc Bình")
         st.write("23C11054 - Nguyễn Khắc Toàn")
     st.header("Instructions")
-    st.write("**Step 1**: Upload Chapter Pages and Character Reference Images.")
-    st.write("**Step 2**: Enter Character Names (comma separated).")
-    st.write("**Step 3**: Check the Colorization checkbox if needed.")
+    st.write("**Step 1**: Upload Raw Images. (Recommended format name is 01.jpg, 02.jpg, 03.jpg, ...)")
+    st.write("**Step 2**: Upload Character Images with names. (Example: ruri_1.jpg, ukka_1.jpg...)")
+    st.write("**Step 3**: Check the option box if needed.")
     st.write("**Step 4**: Click 'Generate Video' to generate the video.")
     st.write("**Step 5**: Click 'Clear' to clear all input fields.")
 
 raw_image_path = "input/raw"
 character_path = "input/character"
+if os.path.exists(raw_image_path):
+    shutil.rmtree(raw_image_path)
+if os.path.exists(character_path):
+    shutil.rmtree(character_path)
 os.makedirs(raw_image_path, exist_ok=True)
 os.makedirs(character_path, exist_ok=True)
 
@@ -92,10 +96,6 @@ character_files = st.file_uploader("Upload images for Character Reference", type
 if not character_files:
     st.warning("⚠️ Please upload images for Character Reference.")
 
-# Character names input
-# st.header("Character Names")
-#character_names = st.text_input("Enter Character Names (comma separated)", placeholder="Luffy,Hank,Nami")
-
 colorize = st.checkbox("Colorization")
 panel_view = st.checkbox("Panel View")
 
@@ -107,6 +107,7 @@ if "progress_complete" not in st.session_state:
 left, right = st.columns(2)
 
 generated_video_path = "/kaggle/working/output/output_final/video_Padding_True.mp4"
+
 if left.button("Generate Video", icon="🔥", use_container_width=True):
     if chapter_files and character_files:
         st.session_state.video_url = ""
@@ -161,6 +162,7 @@ if right.button("Clear", icon="💣", use_container_width=True):
 
 reencoded_video_path = "/kaggle/working/output/output_final/video_Padding_True_audio_reencoded.mp4"
 st.header("Play Output Video")
+
 if os.path.exists(reencoded_video_path):
     st.session_state.video_url = reencoded_video_path
     if os.path.isfile(st.session_state.video_url):
