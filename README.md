@@ -13,7 +13,7 @@ This repository contains a set of Python scripts designed to transform raw manga
 
 ## Files Included
 
-- `main.py`: The main file to run the whole process, very buggy. But you can check the pipeline there
+- `main.py`: The main file to run the whole process, is very buggy. But you can check the pipeline there
 - `demo-manga-read-along.ipynb`: Check the process step-by-step here
 - `requirements.txt`: Lists the dependencies needed to run the scripts.
 
@@ -29,7 +29,7 @@ This repository contains a set of Python scripts designed to transform raw manga
 
 2.  **Prepare Your Data**:
     
-    *   `\src\config.py`: Contains all the path you need to know, this project requires users to provide manga images, character images and voice bank sample for voice clining
+    *   `\src\config.py`: Contains all the paths you need to know, this project requires users to provide manga images, character images, and voice bank samples for voice cloning
     *   Works best when the raw is in English and they are named in sequential order (e.g., `01.jpg`, `02.jpg`, `03.jpg`), the character naming format should be: `luffy_1.jpg`, `nami_1.jpg`.
 
 3.  **Process Images and create Video with voice**:
@@ -54,14 +54,15 @@ Image Demo
 Video Demo
 ----------
 
-## Full-Page View Demo
+## No-Colour Full-Page Demo
 
-[https://github.com/user-attachments/assets/db32e3c1-f95d-49e2-a7da-c626d25d68af](https://github.com/user-attachments/assets/95eeae7f-2c71-4ba4-9d03-95d56433fe14)
+https://github.com/user-attachments/assets/3463238e-dca4-4e1a-99d4-457c59960eec
 
 
-## Panel View Demo
+## Colourized Panel-View Demo
 
-https://github.com/user-attachments/assets/0aabe36d-1422-4318-a076-b0d614e9da7c
+
+https://github.com/user-attachments/assets/61ce8a2e-6fb7-40e2-859f-6ed804f50643
 
 
 Contribution
